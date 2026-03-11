@@ -552,12 +552,12 @@
   const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
   const CONFIG = {
-    autoRefreshMs: 5 * 60 * 1000,
+    autoRefreshMs: 60 * 1000,
     fetchLimit: 50,
-    storageKey: "lottery_dual_machine_v29_api",
+    storageKey: "lottery_dual_machine_v30_api",
     urls: {
       ttl: "https://17-539-api-production.up.railway.app/api/ttl",
-l539: "https://17-539-api-production.up.railway.app/api/539"
+      l539: "https://17-539-api-production.up.railway.app/api/539"
     }
   };
 
@@ -745,8 +745,8 @@ l539: "https://17-539-api-production.up.railway.app/api/539"
     const roots = [ROOT.C4, ROOT.G3, ROOT.A3, ROOT.F3];
     const N = { C5:523.25, D5:587.33, E5:659.25, F5:698.46, G5:783.99, A5:880.00 };
     const bpm = 112;
-    const beat = 60/bpm;
-    const bar  = beat*4;
+    const beat = 60 / bpm;
+    const bar  = beat * 4;
     const base = ctx.currentTime + 0.08;
     const melody = [
       [N.E5,N.G5,N.E5,N.D5, N.C5,N.D5,N.E5,N.G5],
@@ -773,7 +773,7 @@ l539: "https://17-539-api-production.up.railway.app/api/539"
       if(!__winnerMusicCtx) return;
       loop++;
       scheduleOnce(loop);
-    }, Math.max(200, (bar*4*1000) - 80));
+    }, Math.max(200, (bar * 4 * 1000) - 80));
   }
 
   async function stopWinnerMusic(){
@@ -832,7 +832,7 @@ l539: "https://17-539-api-production.up.railway.app/api/539"
 
   function comboKey(nums){
     return [...nums]
-      .map(n=>String(parseInt(n,10)).padStart(2,"0"))
+      .map(n => String(parseInt(n,10)).padStart(2,"0"))
       .sort((a,b)=>parseInt(a,10)-parseInt(b,10))
       .join("-");
   }
@@ -867,7 +867,7 @@ l539: "https://17-539-api-production.up.railway.app/api/539"
     if(!lines.length) return false;
     let ok = 0;
     for(const line of lines.slice(0, 10)){
-      if(/^第\d+筆\s+(\d{2}\s+){4}\d{2}$/.test(line)) ok++;
+      if(/開獎號碼\s+(\d{2}\s+){4}\d{2}$/.test(line)) ok++;
     }
     return ok >= 1;
   }
@@ -907,7 +907,8 @@ l539: "https://17-539-api-production.up.railway.app/api/539"
       autoRefreshEnabled: true,
       rolling: false,
       lastSyncHash: "",
-      timer: null
+      timer: null,
+      restoredHistoryText: ""
     };
   }
 
@@ -966,7 +967,7 @@ l539: "https://17-539-api-production.up.railway.app/api/539"
             <div class="small">最新紀錄由上往下50期</div>
           </div>
           <div class="bd">
-            <textarea id="${id}_historyInput" placeholder="同步後會顯示：&#10;第1筆 01 02 03 04 05"></textarea>
+            <textarea id="${id}_historyInput" placeholder="同步後會顯示：&#10;2026/3/11(星期三) 開獎號碼 05 15 26 37 38"></textarea>
 
             <div class="btns">
               <button id="${id}_btnSync">同步最新 50 期</button>
@@ -1159,14 +1160,14 @@ l539: "https://17-539-api-production.up.railway.app/api/539"
 
   function cleanupInput(items, mode){
     const cleaned = items
-      .map(s => (mode === 'none' ? s : s.trim()))
+      .map(s => (mode === "none" ? s : s.trim()))
       .filter(s => s && s.length);
 
-    if (mode === 'digits'){
+    if (mode === "digits"){
       return cleaned
         .map(s => {
           const m = s.match(/\d+/g);
-          return m ? m.join('') : '';
+          return m ? m.join("") : "";
         })
         .filter(Boolean);
     }
@@ -1194,39 +1195,37 @@ l539: "https://17-539-api-production.up.railway.app/api/539"
   }
 
   function getWeekdayText(dateStr){
-  const m = String(dateStr || "").match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
-  if(!m) return "";
+    const m = String(dateStr || "").match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
+    if(!m) return "";
+    const y = parseInt(m[1], 10);
+    const mo = parseInt(m[2], 10) - 1;
+    const d = parseInt(m[3], 10);
+    const dt = new Date(y, mo, d);
+    const weekdays = ["星期日","星期一","星期二","星期三","星期四","星期五","星期六"];
+    return weekdays[dt.getDay()] || "";
+  }
 
-  const y = parseInt(m[1], 10);
-  const mo = parseInt(m[2], 10) - 1;
-  const d = parseInt(m[3], 10);
+  function formatShortDate(dateStr){
+    const m = String(dateStr || "").match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
+    if(!m) return String(dateStr || "");
+    return `${parseInt(m[1],10)}/${parseInt(m[2],10)}/${parseInt(m[3],10)}`;
+  }
 
-  const dt = new Date(y, mo, d);
-  const weekdays = ["星期日","星期一","星期二","星期三","星期四","星期五","星期六"];
-  return weekdays[dt.getDay()] || "";
-}
+  function historyRecordsToText(records){
+    return records.map((r) => {
+      const sortedNums = (Array.isArray(r.numbers) ? r.numbers : [])
+        .map(n => parseInt(n, 10))
+        .filter(n => !isNaN(n))
+        .sort((a,b)=>a-b)
+        .map(n => String(n).padStart(2,"0"))
+        .join(" ");
 
-function formatShortDate(dateStr){
-  const m = String(dateStr || "").match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
-  if(!m) return String(dateStr || "");
-  return `${parseInt(m[1],10)}/${parseInt(m[2],10)}/${parseInt(m[3],10)}`;
-}
+      const shortDate = formatShortDate(r.date);
+      const weekday = getWeekdayText(r.date);
 
-function historyRecordsToText(records){
-  return records.map((r) => {
-    const sortedNums = (Array.isArray(r.numbers) ? r.numbers : [])
-      .map(n => parseInt(n, 10))
-      .filter(n => !isNaN(n))
-      .sort((a,b)=>a-b)
-      .map(n => String(n).padStart(2,"0"))
-      .join(" ");
-
-    const shortDate = formatShortDate(r.date);
-    const weekday = getWeekdayText(r.date);
-
-    return ` ${shortDate}(${weekday}) 開獎號碼 ${sortedNums}`;
-  }).join("\n");
-}
+      return `${shortDate}(${weekday}) 開獎號碼 ${sortedNums}`;
+    }).join("\n");
+  }
 
   function historyHash(text){
     let h = 0;
@@ -1268,18 +1267,18 @@ function historyRecordsToText(records){
 
       const changed = s.lastSyncHash && s.lastSyncHash !== hash;
       s.lastSyncHash = hash;
+      s.restoredHistoryText = text;
 
       el.historyInput.value = text;
       setSyncState(id, changed ? "已更新新結果" : "同步完成", "ok");
-      el.syncNote.textContent =
-        `資料來源：${s.cfg.syncUrl} ｜ 最新同步：${nowFull()} ｜ 共 ${limited.length} 期`;
+      el.syncNote.textContent = `資料來源：${s.cfg.syncUrl} ｜ 最新同步：${nowFull()} ｜ 共 ${limited.length} 期`;
 
       s.historyAnalysis = analyzeHistoryText(id, text);
       renderHistoryAnalysis(id, s.historyAnalysis);
       persistAll();
 
       if(changed && !silent){
-        showMiniNotice(`${s.cfg.title} 已抓到新結果並更新 31 期資料`, "ok");
+        showMiniNotice(`${s.cfg.title} 已抓到新結果並更新 50 期資料`, "ok");
       }else if(!silent){
         showMiniNotice(`${s.cfg.title} 同步完成`, "info");
       }
@@ -1305,13 +1304,20 @@ function historyRecordsToText(records){
     const draws = [];
 
     lines.forEach(line=>{
-      const arr = cleanupNumbers((line.match(/\d{1,2}/g) || []), maxNum);
-      if(arr.length >= 5){
-        const nums = arr.slice(-5).sort((a,b)=>parseInt(a,10)-parseInt(b,10));
-        drawCount++;
-        draws.push(nums);
-        nums.forEach(n => counts[n]++);
-      }
+      const m = line.match(/開獎號碼\s+((?:\d{2}\s+){4}\d{2})$/);
+      if(!m) return;
+
+      const nums = m[1]
+        .trim()
+        .split(/\s+/)
+        .map(n => String(parseInt(n,10)).padStart(2,"0"))
+        .filter(Boolean);
+
+      if(nums.length !== 5) return;
+
+      drawCount++;
+      draws.push(nums);
+      nums.forEach(n => counts[n]++);
     });
 
     return { counts, drawCount, draws };
@@ -1584,7 +1590,7 @@ function historyRecordsToText(records){
           dt,
           prize: prizeLabelMap[groupName],
           prizeDesc: groupName,
-          who: num
+          who: String(num).padStart(2, "0")
         });
       });
     });
@@ -1631,7 +1637,7 @@ function historyRecordsToText(records){
     const el = getEls(id);
     const raw = el.listInput.value.split(/\r?\n/);
     const mode = el.cleanupMode.value;
-    let items = cleanupInput(raw, mode);
+    const items = cleanupInput(raw, mode);
 
     const seen = new Set();
     const uniq = [];
@@ -1670,6 +1676,8 @@ function historyRecordsToText(records){
     s.generatedGroups = null;
     s.historyAnalysis = null;
     s.lastSyncHash = "";
+    s.restoredHistoryText = "";
+
     const els = getEls(id);
     els.listInput.value = "";
     els.historyInput.value = "";
@@ -1731,6 +1739,33 @@ function historyRecordsToText(records){
     showMiniNotice(`${s.cfg.title}：已撤銷上一筆`, "info");
   }
 
+  function buildHorizontalPrizeRows(log){
+    if (!Array.isArray(log) || log.length === 0) return [];
+
+    const order = ["第一組", "第二組", "第三組", "第四組", "全車號碼"];
+    const grouped = new Map();
+
+    log.forEach(item => {
+      const key = item.prizeDesc || "未分類";
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key).push(String(item.who || "").padStart(2, "0"));
+    });
+
+    const rows = [];
+    order.forEach(name => {
+      if (grouped.has(name)) {
+        rows.push([name, ...grouped.get(name)]);
+        grouped.delete(name);
+      }
+    });
+
+    for (const [name, nums] of grouped.entries()) {
+      rows.push([name, ...nums]);
+    }
+
+    return rows;
+  }
+
   function exportCsv(id){
     const s = state.lotteries[id];
     if (s.log.length === 0){
@@ -1738,23 +1773,12 @@ function historyRecordsToText(records){
       return;
     }
 
-    const rows = [
-      ["開獎時間", "獎項", "獎項內容", "中獎號碼"]
-    ];
-
-    s.log.forEach(item=>{
-      rows.push([
-        item.dt || "",
-        item.prize || "",
-        item.prizeDesc || "",
-        item.who || ""
-      ]);
-    });
+    const rows = buildHorizontalPrizeRows(s.log);
 
     const escCsv = (v) => {
-      const s = String(v ?? "");
-      if (/[",\n\r]/.test(s)) return '"' + s.replaceAll('"','""') + '"';
-      return s;
+      const sv = String(v ?? "");
+      if (/[",\n\r]/.test(sv)) return '"' + sv.replaceAll('"','""') + '"';
+      return sv;
     };
 
     const csv = rows.map(r => r.map(escCsv).join(",")).join("\r\n");
@@ -1762,10 +1786,10 @@ function historyRecordsToText(records){
     const blob = new Blob([bom + csv], {type:"text/csv;charset=utf-8"});
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `${state.lotteries[id].cfg.title}_logs_${Date.now()}.csv`;
+    a.download = `${state.lotteries[id].cfg.title}_horizontal_${Date.now()}.csv`;
     a.click();
     URL.revokeObjectURL(a.href);
-    showMiniNotice(`${s.cfg.title}：CSV 已匯出`, "ok");
+    showMiniNotice(`${s.cfg.title}：CSV 已匯出（橫向）`, "ok");
   }
 
   function exportXlsx(id, fileName = "logs.xlsx"){
@@ -1779,30 +1803,18 @@ function historyRecordsToText(records){
       return;
     }
 
-    const wsData = [
-      ["開獎時間", "獎項", "獎項內容", "中獎號碼"]
-    ];
-
-    s.log.forEach(item=>{
-      wsData.push([
-        item.dt || "",
-        item.prize || "",
-        item.prizeDesc || "",
-        item.who || ""
-      ]);
-    });
-
+    const wsData = buildHorizontalPrizeRows(s.log);
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(wsData);
-    ws["!cols"] = [
-      { wch: 22 },
-      { wch: 14 },
-      { wch: 18 },
-      { wch: 12 }
-    ];
-    XLSX.utils.book_append_sheet(wb, ws, s.cfg.title + "_logs");
+
+    const maxCols = Math.max(...wsData.map(r => r.length), 1);
+    ws["!cols"] = Array.from({ length: maxCols }, (_, i) => ({
+      wch: i === 0 ? 12 : 6
+    }));
+
+    XLSX.utils.book_append_sheet(wb, ws, s.cfg.title + "_groups");
     XLSX.writeFile(wb, fileName);
-    showMiniNotice(`${s.cfg.title}：${fileName} 已匯出`, "ok");
+    showMiniNotice(`${s.cfg.title}：${fileName} 已匯出（橫向）`, "ok");
   }
 
   function maybeAutoDownloadXlsx(id){
@@ -1862,12 +1874,17 @@ function historyRecordsToText(records){
         removedFromPool = true;
       }
 
-      const logItem = { dt: nowFull(), prize: prizeLabel, prizeDesc: prizeDesc || "", who: realWinner };
+      const logItem = {
+        dt: nowFull(),
+        prize: prizeLabel,
+        prizeDesc: prizeDesc || "",
+        who: String(realWinner).padStart(2, "0")
+      };
       s.log.push(logItem);
 
       s.lastAction = { multi: false, removedFromPool, removedValue: realWinner, removedIndex: idx };
 
-      setWinner(id, realWinner, prizeDesc ? `${prizeLabel}（${prizeDesc}）` : prizeLabel);
+      setWinner(id, String(realWinner).padStart(2, "0"), prizeDesc ? `${prizeLabel}（${prizeDesc}）` : prizeLabel);
       renderLog(id);
       updateStats(id);
       playDing();
@@ -1881,9 +1898,9 @@ function historyRecordsToText(records){
 
       if (showSummaryAfter){
         await sleep(60);
-        showSummary(prizeLabel, prizeDesc, [realWinner]);
+        showSummary(prizeLabel, prizeDesc, [String(realWinner).padStart(2, "0")]);
       }
-      return realWinner;
+      return String(realWinner).padStart(2, "0");
     }catch(e){
       try{ el.currentWinner.classList.remove("rolling"); }catch(_){}
       s.rolling = false;
@@ -1926,14 +1943,15 @@ function historyRecordsToText(records){
         for(let i = 0; i < takeCount; i++){
           const idx = Math.floor(Math.random() * s.pool.length);
           const realWinner = s.pool[idx];
-          winners.push(realWinner);
+          const padWinner = String(realWinner).padStart(2, "0");
+          winners.push(padWinner);
           removedItems.push({ value: realWinner, index: idx });
           s.pool.splice(idx, 1);
         }
       }else{
         for(let i = 0; i < takeCount; i++){
           const idx = Math.floor(Math.random() * s.pool.length);
-          winners.push(s.pool[idx]);
+          winners.push(String(s.pool[idx]).padStart(2, "0"));
         }
       }
 
@@ -2066,6 +2084,7 @@ function historyRecordsToText(records){
         s.log = Array.isArray(saved.log) ? saved.log : [];
         s.lastSyncHash = saved.lastSyncHash || "";
         s.autoRefreshEnabled = saved.autoRefreshEnabled !== false;
+        s.restoredHistoryText = saved.historyText || "";
 
         els.listInput.value = saved.listText || "";
         els.historyInput.value = saved.historyText || "";
@@ -2103,8 +2122,11 @@ function historyRecordsToText(records){
     setAutoState(id);
     syncPrizeButtons(id);
 
+    if(s.restoredHistoryText){
+      getEls(id).historyInput.value = s.restoredHistoryText;
+    }
+
     if(s.historyAnalysis){
-      getEls(id).historyInput.value = serializeState().lotteries[id]?.historyText || getEls(id).historyInput.value;
       renderHistoryAnalysis(id, s.historyAnalysis);
       setSyncState(id, "已從本機恢復資料", "info");
       getEls(id).syncNote.textContent = `資料來源：${s.cfg.syncUrl} ｜ 已恢復本機保存資料`;
