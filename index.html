@@ -530,8 +530,8 @@
           <img alt="LOGO" src="assets/logo/logo.png" onerror="this.style.display='none'">
         </div>
         <div>
-          <h1>天天樂＋539 雙欄分析機-十七製作©</h1>
-          <p>自動抓最新 31 期｜防 2 / 3 碰撞分組｜台灣時間 <span id="clockText">—</span></p>
+          <h1>天天樂 & 539 冷熱號分析機-十七製作©</h1>
+          <p>自動抓天天樂&539前50期紀錄｜分析冷熱號｜高風險2/3碰撞分組｜台灣時間 <span id="clockText">—</span></p>
         </div>
       </div>
       <div class="righttools">
@@ -553,7 +553,7 @@
 
   const CONFIG = {
     autoRefreshMs: 5 * 60 * 1000,
-    fetchLimit: 31,
+    fetchLimit: 50,
     storageKey: "lottery_dual_machine_v29_api",
     urls: {
       ttl: "https://17-539-api-production.up.railway.app/api/ttl",
@@ -955,21 +955,21 @@ l539: "https://17-539-api-production.up.railway.app/api/539"
 
             <div class="footerTip">
               ✅ 手動模式：你也可以貼入 01～39 後用本區按鈕自己抽。<br>
-              ✅ 智能模式：貼上歷史開獎後，按「防 2/3 碰撞自動生成」。
+              ✅ 智能模式：按「防 2/3 碰撞自動生成」。
             </div>
           </div>
         </div>
 
         <div class="card">
           <div class="hd">
-            <div class="title"><span class="dot"></span>${cfg.title}｜歷史開獎分析（防 2 / 3 碰撞）</div>
-            <div class="small">最新往下 31 期</div>
+            <div class="title"><span class="dot"></span>${cfg.title}｜歷史開獎分析（50期）</div>
+            <div class="small">最新紀錄由上往下50期</div>
           </div>
           <div class="bd">
             <textarea id="${id}_historyInput" placeholder="同步後會顯示：&#10;第1筆 01 02 03 04 05"></textarea>
 
             <div class="btns">
-              <button id="${id}_btnSync">同步最新 31 期</button>
+              <button id="${id}_btnSync">同步最新 50 期</button>
               <button id="${id}_btnAnalyzeHistory">分析資料</button>
               <button id="${id}_btnGenerateSmart">防 2/3 碰撞自動生成</button>
               <button class="secondary" id="${id}_btnApply01to39">塞入 01-39 到搖獎號碼</button>
@@ -1013,8 +1013,8 @@ l539: "https://17-539-api-production.up.railway.app/api/539"
 
         <div class="card">
           <div class="hd">
-            <div class="title"><span class="dot"></span>${cfg.title}｜抽獎獎項與抽選</div>
-            <div class="small">第一組～第四組主防 2 / 3 碰撞</div>
+            <div class="title"><span class="dot"></span>${cfg.title}｜隨機號碼產生</div>
+            <div class="small">第一組～第四組 全車隨機出號</div>
           </div>
           <div class="bd">
             <div class="prizeBox">
