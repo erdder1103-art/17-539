@@ -536,7 +536,7 @@
       </div>
       <div class="righttools">
         <div class="pill">🔄 自動更新：<span id="globalAutoText">開啟</span></div>
-        <div class="pill">⏱️ 更新頻率：5 分鐘</div>
+        <div class="pill">⏱️ 更新頻率：1 分鐘</div>
         <div class="pill">💾 本機保存：<span id="saveStateText">開啟</span></div>
       </div>
     </div>
@@ -1193,12 +1193,40 @@ l539: "https://17-539-api-production.up.railway.app/api/539"
     return await res.json();
   }
 
-  function historyRecordsToText(records){
-    return records.map((r, i) => {
-      const nums = r.numbers.join(" ");
-      return `第${i + 1}筆 ${nums}`;
-    }).join("\n");
-  }
+  function getWeekdayText(dateStr){
+  const m = String(dateStr || "").match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
+  if(!m) return "";
+
+  const y = parseInt(m[1], 10);
+  const mo = parseInt(m[2], 10) - 1;
+  const d = parseInt(m[3], 10);
+
+  const dt = new Date(y, mo, d);
+  const weekdays = ["星期日","星期一","星期二","星期三","星期四","星期五","星期六"];
+  return weekdays[dt.getDay()] || "";
+}
+
+function formatShortDate(dateStr){
+  const m = String(dateStr || "").match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
+  if(!m) return String(dateStr || "");
+  return `${parseInt(m[1],10)}/${parseInt(m[2],10)}/${parseInt(m[3],10)}`;
+}
+
+function historyRecordsToText(records){
+  return records.map((r) => {
+    const sortedNums = (Array.isArray(r.numbers) ? r.numbers : [])
+      .map(n => parseInt(n, 10))
+      .filter(n => !isNaN(n))
+      .sort((a,b)=>a-b)
+      .map(n => String(n).padStart(2,"0"))
+      .join(" ");
+
+    const shortDate = formatShortDate(r.date);
+    const weekday = getWeekdayText(r.date);
+
+    return ` ${shortDate}(${weekday}) 開獎號碼 ${sortedNums}`;
+  }).join("\n");
+}
 
   function historyHash(text){
     let h = 0;
