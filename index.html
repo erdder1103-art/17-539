@@ -1008,6 +1008,10 @@
               <div id="${id}_groupPreview" class="groupPreview">
                 <div class="small">尚未生成分組</div>
               </div>
+
+              <div class="btns" style="margin-top:10px;">
+                <button class="green" id="${id}_btnConfirmTracking">確定通報</button>
+              </div>
             </div>
           </div>
         </div>
@@ -2136,6 +2140,84 @@
     }
   }
 
+
+  async function confirmTracking(id){
+    const s = state.lotteries[id];
+    if(!s.generatedGroups || !s.generatedGroups.groups){
+      showMiniNotice(`${s.cfg.title}：請先執行「防 2/3 碰撞自動生成」`, "warn");
+      return;
+    }
+
+    const btn = $(`${id}_btnConfirmTracking`);
+    const oldText = btn ? btn.textContent : "";
+    if(btn){
+      btn.disabled = true;
+      btn.textContent = "通報中...";
+    }
+
+    const order = [
+      $(`${id}_prize1Desc`).value.trim() || "第一組",
+      $(`${id}_prize2Desc`).value.trim() || "第二組",
+      $(`${id}_prize3Desc`).value.trim() || "第三組",
+      $(`${id}_prize4Desc`).value.trim() || "第四組",
+      $(`${id}_prize5Desc`).value.trim() || "全車號碼"
+    ];
+
+    const groups = s.generatedGroups.groups || {};
+    const payload = {
+      lotteryType: id === "ttl" ? "ttl" : "539",
+      lotteryTitle: s.cfg.title,
+      confirmedAt: nowFull(),
+      groups: {
+        group1: cleanupNumbers(groups[order[0]] || [], s.cfg.maxNum),
+        group2: cleanupNumbers(groups[order[1]] || [], s.cfg.maxNum),
+        group3: cleanupNumbers(groups[order[2]] || [], s.cfg.maxNum),
+        group4: cleanupNumbers(groups[order[3]] || [], s.cfg.maxNum),
+        full: cleanupNumbers(groups[order[4]] || [], s.cfg.maxNum)
+      },
+      labels: {
+        group1: order[0],
+        group2: order[1],
+        group3: order[2],
+        group4: order[3],
+        full: order[4]
+      }
+    };
+
+    try{
+      const res = await fetch("/api/confirm-tracking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      let result = null;
+      try{
+        result = await res.json();
+      }catch(e){
+        result = null;
+      }
+
+      if(!res.ok || !result?.ok){
+        const msg = result?.message || `HTTP ${res.status}`;
+        throw new Error(msg);
+      }
+
+      const replaced = !!result.replacedOldTracking;
+      showMiniNotice(
+        `${s.cfg.title}：${replaced ? "已取消前一組並更新通報" : "確定通報成功，已送出 TG"}`,
+        "ok"
+      );
+    }catch(err){
+      showMiniNotice(`${s.cfg.title}：通報失敗：${err.message}`, "warn");
+    }finally{
+      if(btn){
+        btn.disabled = false;
+        btn.textContent = oldText || "確定通報";
+      }
+    }
+  }
+
   function bindEvents(id){
     $(`${id}_btnLoad`).addEventListener("click", ()=>loadList(id));
     $(`${id}_btnSample`).addEventListener("click", ()=>apply01to39List(id));
@@ -2161,6 +2243,8 @@
       persistAll();
       showMiniNotice(`${state.lotteries[id].cfg.title}：自動下載 logs.xlsx 已${getEls(id).autoDownloadXlsx.checked ? "開啟" : "關閉"}`, "info");
     });
+
+    $(`${id}_btnConfirmTracking`).addEventListener("click", ()=>confirmTracking(id));
 
     $(`${id}_btnGenerateSmart`).addEventListener("click", ()=>{
       const text = getEls(id).historyInput.value.trim();
